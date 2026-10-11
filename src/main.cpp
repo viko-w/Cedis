@@ -1,6 +1,10 @@
+#include "clock.hpp"
 #include <iostream>
 
+
 int main(){
-    std::cout << "Hello world";
+    cedis::Clock* clock = new cedis::Clock();
+    std::cout << clock->getTimestamp() << '\n';
+
     return 0;
 }

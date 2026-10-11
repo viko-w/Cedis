@@ -4,6 +4,9 @@ set(CMAKE_CXX_STANDARD 20)
 
 set(SOURCE_FILES
     src/main.cpp
+    src/clock.cpp
 )
 
-add_executable(cedis src/main.cpp)
+
+
+add_executable(cedis ${SOURCE_FILES})
