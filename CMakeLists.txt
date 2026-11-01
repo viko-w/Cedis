@@ -8,6 +8,7 @@ set(SOURCE_FILES
     src/clock.cpp
     src/tui.cpp
     src/render/render.cpp
+    src/include/gl.c
 )
 
 include(FetchContent)
@@ -20,6 +21,7 @@ FetchContent_MakeAvailable(cpptui)
 
 add_executable(cedis ${SOURCE_FILES})
 
+target_include_directories(cedis PRIVATE src/include)
 target_link_libraries(cedis PRIVATE cpptui::cpptui glfw GL)
 
 file(CREATE_LINK ${CMAKE_BINARY_DIR}/compile_commands.json
