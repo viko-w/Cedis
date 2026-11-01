@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <cmath>
 #include <cstddef>
+#include <span>
 
 
 namespace cedis{
@@ -28,11 +29,20 @@ namespace cedis{
         GLfloat vertices[] = {
             -0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
             0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-            0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f
+            0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
+            -0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f,
+            0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f,
+            0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f
 
         };
 
-        m_window = glfwCreateWindow(640, 480, "Spooky Amdus Window", NULL, NULL);
+        GLuint indices[] = {
+            0, 3, 5,
+            3, 2, 4,
+            5, 4, 1
+        };
+
+        m_window = glfwCreateWindow(800, 800, "Spooky Amdus Window", NULL, NULL);
         if(!m_window){
             glfwTerminate();
             return -1;
@@ -41,15 +51,15 @@ namespace cedis{
         glfwMakeContextCurrent(m_window);
 
         gladLoadGL((GLADloadfunc) glfwGetProcAddress);
-        glViewport(0, 0, 640, 480);
+        glViewport(0, 0, 800, 800);
 
         // Create Shader Program
         GLuint shaderProgram = glCreateProgram();
         Render::createShader(&shaderProgram);
 
-        // Create Vertex Array/Buffer Object
-        GLuint VAO, VBO;
-        Render::createVertexObjects(&VAO, &VBO, vertices);
+        // Create Vertex Array/Buffer Object, and 
+        GLuint VAO, VBO, EBO;
+        Render::createVertexObjects(&VAO, &VBO, &EBO, vertices, indices);
 
 
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -60,6 +70,7 @@ namespace cedis{
 
         glDeleteVertexArrays(1, &VAO);
         glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
         glDeleteProgram(shaderProgram);
 
         glfwDestroyWindow(m_window);
@@ -76,7 +87,7 @@ namespace cedis{
             glUseProgram(*shaderProgram);
 
             glBindVertexArray(*VAO);
-            glDrawArrays(GL_TRIANGLES, 0, 3);
+            glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
 
             // Swap front and back buffers
             glfwSwapBuffers(m_window);
@@ -110,19 +121,24 @@ namespace cedis{
         return 0;
     }
 
-    int Render::createVertexObjects(GLuint *VAO, GLuint *VBO, std::span<const GLfloat> vertices){
+    int Render::createVertexObjects(GLuint *VAO, GLuint *VBO, GLuint *EBO, std::span<const GLfloat> vertices, std::span<const GLuint> indices){
         glGenVertexArrays(1, &*VAO); // Must be generated before VBO
         glGenBuffers(1, &*VBO);
+        glGenBuffers(1, &*EBO);
 
         glBindVertexArray(*VAO);
         glBindBuffer(GL_ARRAY_BUFFER, *VBO);
 
         glBufferData(GL_ARRAY_BUFFER, vertices.size_bytes(), vertices.data(), GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size_bytes(), indices.data(), GL_STATIC_DRAW);
+
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         return 0;
     }

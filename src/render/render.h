@@ -16,7 +16,7 @@ namespace cedis {
 
         private:
         int createShader(GLuint *shaderProgram);
-        int createVertexObjects(GLuint *VAO, GLuint *VBO, std::span<const GLfloat> vertices);
+        int createVertexObjects(GLuint *VAO, GLuint *VBO, GLuint *EBO, std::span<const GLfloat> vertices, std::span<const GLuint> indices);
 
         GLFWwindow* m_window;
 
