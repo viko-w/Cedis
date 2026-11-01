@@ -3,6 +3,7 @@
 #include "glad.h"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include <span>
 
 namespace cedis {
     class Render{
@@ -14,6 +15,9 @@ namespace cedis {
         int loop(GLuint *shaderProgram, GLuint *VAO);
 
         private:
+        int createShader(GLuint *shaderProgram);
+        int createVertexObjects(GLuint *VAO, GLuint *VBO, std::span<const GLfloat> vertices);
+
         GLFWwindow* m_window;
 
         // SHADERS

@@ -43,45 +43,13 @@ namespace cedis{
         gladLoadGL((GLADloadfunc) glfwGetProcAddress);
         glViewport(0, 0, 640, 480);
 
-
-        // Create vertex shader
-        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-        glCompileShader(vertexShader);
-
-        // Create fragment shader
-        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-        glCompileShader(fragmentShader);
-
-        // Wrap shaders in shader program
+        // Create Shader Program
         GLuint shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
+        Render::createShader(&shaderProgram);
 
-        // Delete vertex and fragment shaders
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-
-
-        // Create vertex buffers
+        // Create Vertex Array/Buffer Object
         GLuint VAO, VBO;
-
-        glGenVertexArrays(1, &VAO); // Must be generated before VBO
-        glGenBuffers(1, &VBO);
-
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindVertexArray(0);
-
-
+        Render::createVertexObjects(&VAO, &VBO, vertices);
 
 
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -116,6 +84,46 @@ namespace cedis{
             // Poll for processed events
             glfwPollEvents();
         }
+        return 0;
+    }
+
+    int Render::createShader(GLuint *shaderProgram){
+        // Create vertex shader
+        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+        glCompileShader(vertexShader);
+
+        // Create fragment shader
+        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+        glCompileShader(fragmentShader);
+
+        // Wrap shaders in shader program
+        glAttachShader(*shaderProgram, vertexShader);
+        glAttachShader(*shaderProgram, fragmentShader);
+        glLinkProgram(*shaderProgram);
+
+        // Delete vertex and fragment shaders
+        glDeleteShader(vertexShader);
+        glDeleteShader(fragmentShader);
+
+        return 0;
+    }
+
+    int Render::createVertexObjects(GLuint *VAO, GLuint *VBO, std::span<const GLfloat> vertices){
+        glGenVertexArrays(1, &*VAO); // Must be generated before VBO
+        glGenBuffers(1, &*VBO);
+
+        glBindVertexArray(*VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, *VBO);
+
+        glBufferData(GL_ARRAY_BUFFER, vertices.size_bytes(), vertices.data(), GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+
         return 0;
     }
 }
