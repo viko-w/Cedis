@@ -58,12 +58,13 @@ namespace cedis{
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
         GLfloat vertices[] = {
-            -0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-            0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-            0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
-            -0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f,
-            0.5f / 2, 0.5f * float(sqrt(3)) / 6, 0.0f,
-            0.0f, -0.5f * float(sqrt(3)) / 3, 0.0f
+	    //  POSITION						COLORS
+            -0.5f,	-0.5f * float(sqrt(3)) / 3,	0.0f,	0.8f, 0.3f,  0.02f,
+             0.5f,	-0.5f * float(sqrt(3)) / 3,	0.0f,	0.8f, 0.3f,  0.02f,
+             0.0f,	 0.5f * float(sqrt(3)) * 2 / 3,	0.0f,	1.0f, 0.6f,  0.32f,
+            -0.5f / 2,	 0.5f * float(sqrt(3)) / 6,	0.0f,	0.9f, 0.45f, 0.17f,
+             0.5f / 2,	 0.5f * float(sqrt(3)) / 6,	0.0f,	0.9f, 0.45f, 0.17f,
+             0.0f,	-0.5f * float(sqrt(3)) / 3,	0.0f,	0.8f, 0.3f,  0.02f
 
         };
 
@@ -96,7 +97,8 @@ namespace cedis{
         VBO VBO1(vertices, sizeof(vertices));
         EBO EBO1(indices, sizeof(indices));
 
-        VAO1.LinkVBO(VBO1, 0);
+        VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0);
+        VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3*sizeof(float)));
         VAO1.Unbind();
         VBO1.Unbind();
         EBO1.Unbind();
