@@ -1,10 +1,18 @@
 #include "render.h"
 #include "glad.h"
-#include <GL/glext.h>
-#include <GLFW/glfw3.h>
+
+#include "vbo.h"
+#include "ebo.h"
+#include "vao.h"
+
 #include <cmath>
-#include <cstddef>
-#include <span>
+#include <ios>
+
+#include <fstream>
+#include <iostream>
+#include <cerrno>
+#include <string>
+#include <cstring>
 
 
 namespace cedis{
@@ -15,8 +23,31 @@ namespace cedis{
 
     }
 
+    #pragma region TODO: Move into appropriate header eventually
+    std::string Render::getFileContents(const char *filename){
+        std::ifstream in(filename, std::ios::binary);
+        if(in){
+            std::string contents;
+            in.seekg(0, std::ios::end);
+            contents.resize(in.tellg());
+            in.seekg(0, std::ios::beg);
+            in.read(&contents[0], contents.size());
+            in.close();
 
-    int Render::initWindow(){
+            return (contents);
+        }
+        throw(errno);
+    }
+
+    #pragma endregion
+
+
+    int Render::initWindow(const char* vertFile, const char* fragFile){
+
+        // Get shader source from shader files
+        const char* vertexShaderSource = constructShaderSource(vertFile);
+        const char* fragmentShaderSource = constructShaderSource(fragFile);
+
         // Init library
         if(!glfwInit()){
             return -1;
@@ -54,24 +85,32 @@ namespace cedis{
         glViewport(0, 0, 800, 800);
 
         // Create Shader Program
-        GLuint shaderProgram = glCreateProgram();
-        Render::createShader(&shaderProgram);
+        ID = glCreateProgram();
+        Render::createShader(&ID, vertexShaderSource, fragmentShaderSource);
 
-        // Create Vertex Array/Buffer Object, and 
-        GLuint VAO, VBO, EBO;
-        Render::createVertexObjects(&VAO, &VBO, &EBO, vertices, indices);
+        // Create Vertex Array/Buffer Object
 
+        VAO VAO1;
+        VAO1.Bind();
+
+        VBO VBO1(vertices, sizeof(vertices));
+        EBO EBO1(indices, sizeof(indices));
+
+        VAO1.LinkVBO(VBO1, 0);
+        VAO1.Unbind();
+        VBO1.Unbind();
+        EBO1.Unbind();
 
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glfwSwapBuffers(m_window);
 
-        Render::loop(&shaderProgram, &VAO);
+        Render::loop(&ID, &VAO1);
 
-        glDeleteVertexArrays(1, &VAO);
-        glDeleteBuffers(1, &VBO);
-        glDeleteBuffers(1, &EBO);
-        glDeleteProgram(shaderProgram);
+        VAO1.Delete();
+        VBO1.Delete();
+        EBO1.Delete();
+        Delete();
 
         glfwDestroyWindow(m_window);
 
@@ -79,14 +118,18 @@ namespace cedis{
         return 0;
     }
 
-    int Render::loop(GLuint *shaderProgram, GLuint *VAO){
+    int Render::loop(GLuint *shaderProgram, VAO *VAO){
         while(!glfwWindowShouldClose(m_window)){
             // Render
             glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            glUseProgram(*shaderProgram);
 
-            glBindVertexArray(*VAO);
+            //glUseProgram(*shaderProgram);
+            Activate();
+
+            //glBindVertexArray(*VAO);
+            VAO->Bind();
+
             glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
 
             // Swap front and back buffers
@@ -98,7 +141,7 @@ namespace cedis{
         return 0;
     }
 
-    int Render::createShader(GLuint *shaderProgram){
+    int Render::createShader(GLuint *shaderProgram, const char* vertexShaderSource, const char* fragmentShaderSource){
         // Create vertex shader
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
@@ -122,6 +165,7 @@ namespace cedis{
     }
 
     int Render::createVertexObjects(GLuint *VAO, GLuint *VBO, GLuint *EBO, std::span<const GLfloat> vertices, std::span<const GLuint> indices){
+        
         glGenVertexArrays(1, &*VAO); // Must be generated before VBO
         glGenBuffers(1, &*VBO);
         glGenBuffers(1, &*EBO);
@@ -141,5 +185,17 @@ namespace cedis{
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         return 0;
+    }
+
+    char* Render::constructShaderSource(const char *file){
+        std::string code = getFileContents(file);
+        return strdup(code.c_str());
+    }
+
+    void Render::Activate(){
+        glUseProgram(ID);
+    }
+    void Render::Delete(){
+        glDeleteProgram(ID);
     }
 }

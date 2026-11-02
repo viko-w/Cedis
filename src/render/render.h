@@ -1,9 +1,11 @@
 #pragma once
 
-#include "glad.h"
+#include "vao.h"
+#include <glad.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <span>
+#include <string>
 
 namespace cedis {
     class Render{
@@ -11,29 +13,28 @@ namespace cedis {
         Render();
         ~Render();
 
-        int initWindow();
-        int loop(GLuint *shaderProgram, GLuint *VAO);
+        int initWindow(const char* vertFile, const char* fragFile);
+        int loop(GLuint *shaderProgram, VAO *VAO);
+
+        void Activate();
+        void Delete();
+
+        // TODO: Move into appropriate header eventually
+        std::string getFileContents(const char* filename);
+
+        GLuint ID;
 
         private:
-        int createShader(GLuint *shaderProgram);
+        int createShader(GLuint *shaderProgram, const char* vertexShaderSource, const char* fragmentShaderSource);
         int createVertexObjects(GLuint *VAO, GLuint *VBO, GLuint *EBO, std::span<const GLfloat> vertices, std::span<const GLuint> indices);
 
-        GLFWwindow* m_window;
+        enum SHADER_TYPE{
+            VERTEX,
+            FRAGMEN
+        };
+        char* constructShaderSource(const char* file);
 
-        // SHADERS
-        const char* vertexShaderSource =
-            "#version 330 core \n"
-            "layout (location = 0) in vec3 aPos;\n"
-            "void main(){\n"
-            "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-            "}\0";
-        
-        const char* fragmentShaderSource =
-            "#version 330 core\n"
-            "out vec4 FragColor;\n"
-            "void main(){\n"
-            "   FragColor = vec4(0.8f, 0.3f, 0.02f, 1.0f);\n"
-            "}\0";
+        GLFWwindow* m_window;
 
     };
 }

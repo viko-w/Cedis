@@ -14,7 +14,7 @@ int main(){
 
     cedis::Render *render = new cedis::Render();
 
-    render->initWindow();
+    render->initWindow("shaders/default.vert", "shaders/default.frag");
 
     return 0;
 }
