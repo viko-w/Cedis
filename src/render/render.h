@@ -14,7 +14,7 @@ namespace cedis {
         ~Render();
 
         int initWindow(const char* vertFile, const char* fragFile);
-        int loop(GLuint *shaderProgram, VAO *VAO);
+        int loop(VAO *VAO, GLuint *uniformID);
 
         void Activate();
         void Delete();
@@ -27,6 +27,8 @@ namespace cedis {
         private:
         int createShader(GLuint *shaderProgram, const char* vertexShaderSource, const char* fragmentShaderSource);
         int createVertexObjects(GLuint *VAO, GLuint *VBO, GLuint *EBO, std::span<const GLfloat> vertices, std::span<const GLuint> indices);
+
+        void checkCompileErrors(unsigned int shader, const char* type);
 
         enum SHADER_TYPE{
             VERTEX,

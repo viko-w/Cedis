@@ -103,11 +103,13 @@ namespace cedis{
         VBO1.Unbind();
         EBO1.Unbind();
 
+        GLuint uniID = glGetUniformLocation(ID, "scale");
+
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glfwSwapBuffers(m_window);
 
-        Render::loop(&ID, &VAO1);
+        Render::loop(&VAO1, &uniID);
 
         VAO1.Delete();
         VBO1.Delete();
@@ -120,16 +122,15 @@ namespace cedis{
         return 0;
     }
 
-    int Render::loop(GLuint *shaderProgram, VAO *VAO){
+    int Render::loop(VAO *VAO, GLuint *uniformID){
         while(!glfwWindowShouldClose(m_window)){
             // Render
             glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            //glUseProgram(*shaderProgram);
             Activate();
+            glUniform1f(*uniformID, 0.5f);
 
-            //glBindVertexArray(*VAO);
             VAO->Bind();
 
             glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
@@ -148,16 +149,19 @@ namespace cedis{
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
         glCompileShader(vertexShader);
+        checkCompileErrors(vertexShader, "VERTEX");
 
         // Create fragment shader
         GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
         glCompileShader(fragmentShader);
+        checkCompileErrors(fragmentShader, "FRAGMENT");
 
         // Wrap shaders in shader program
         glAttachShader(*shaderProgram, vertexShader);
         glAttachShader(*shaderProgram, fragmentShader);
         glLinkProgram(*shaderProgram);
+        checkCompileErrors(*shaderProgram, "PROGRAM");
 
         // Delete vertex and fragment shaders
         glDeleteShader(vertexShader);
@@ -199,5 +203,24 @@ namespace cedis{
     }
     void Render::Delete(){
         glDeleteProgram(ID);
+    }
+
+    void Render::checkCompileErrors(unsigned int shader, const char *type){
+        GLint hasCompiled;
+        char infoLog[1024];
+        if (type != "PROGRAM"){
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &hasCompiled);
+            if(hasCompiled == GL_FALSE){
+                glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+                std::cout << "SHADER_COMPLICATION_ERROR for: " <<  type << "\n" << std::endl; 
+            }
+        }
+        else{
+            glGetProgramiv(shader, GL_COMPILE_STATUS, &hasCompiled);
+            if(hasCompiled == GL_FALSE){
+                glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+                std::cout << "SHADER_LINKING_ERROR for: " <<  type << "\n" << std::endl; 
+            }
+        }
     }
 }
