@@ -1,17 +1,13 @@
 #include "render.h"
 #include "glad.h"
 
+#include "texture.h"
 #include "vbo.h"
 #include "ebo.h"
 #include "vao.h"
+#include "shader.h"
 
-#include <cmath>
-#include <ios>
-
-#include <fstream>
-#include <iostream>
-#include <cerrno>
-#include <string>
+#include <stb_image.h>
 #include <cstring>
 
 
@@ -23,30 +19,8 @@ namespace cedis{
 
     }
 
-    #pragma region TODO: Move into appropriate header eventually
-    std::string Render::getFileContents(const char *filename){
-        std::ifstream in(filename, std::ios::binary);
-        if(in){
-            std::string contents;
-            in.seekg(0, std::ios::end);
-            contents.resize(in.tellg());
-            in.seekg(0, std::ios::beg);
-            in.read(&contents[0], contents.size());
-            in.close();
-
-            return (contents);
-        }
-        throw(errno);
-    }
-
-    #pragma endregion
-
 
     int Render::initWindow(const char* vertFile, const char* fragFile){
-
-        // Get shader source from shader files
-        const char* vertexShaderSource = constructShaderSource(vertFile);
-        const char* fragmentShaderSource = constructShaderSource(fragFile);
 
         // Init library
         if(!glfwInit()){
@@ -58,20 +32,16 @@ namespace cedis{
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
         GLfloat vertices[] = {
-	    //  POSITION						COLORS
-            -0.5f,	-0.5f * float(sqrt(3)) / 3,	0.0f,	0.8f, 0.3f,  0.02f,
-             0.5f,	-0.5f * float(sqrt(3)) / 3,	0.0f,	0.8f, 0.3f,  0.02f,
-             0.0f,	 0.5f * float(sqrt(3)) * 2 / 3,	0.0f,	1.0f, 0.6f,  0.32f,
-            -0.5f / 2,	 0.5f * float(sqrt(3)) / 6,	0.0f,	0.9f, 0.45f, 0.17f,
-             0.5f / 2,	 0.5f * float(sqrt(3)) / 6,	0.0f,	0.9f, 0.45f, 0.17f,
-             0.0f,	-0.5f * float(sqrt(3)) / 3,	0.0f,	0.8f, 0.3f,  0.02f
-
+	    //  POSITION						    COLORS                              TEXTURE MAP
+            -0.5f,	-0.5f,  0.0f,  1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
+            -0.5f,	 0.5f,  0.0f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+            0.5f,	0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+            0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f
         };
 
         GLuint indices[] = {
-            0, 3, 5,
-            3, 2, 4,
-            5, 4, 1
+            0, 2, 1,
+            0, 3, 2
         };
 
         m_window = glfwCreateWindow(800, 800, "Spooky Amdus Window", NULL, NULL);
@@ -85,9 +55,8 @@ namespace cedis{
         gladLoadGL((GLADloadfunc) glfwGetProcAddress);
         glViewport(0, 0, 800, 800);
 
-        // Create Shader Program
-        ID = glCreateProgram();
-        Render::createShader(&ID, vertexShaderSource, fragmentShaderSource);
+
+        Shader shaderProgram(vertFile, fragFile);
 
         // Create Vertex Array/Buffer Object
 
@@ -97,24 +66,31 @@ namespace cedis{
         VBO VBO1(vertices, sizeof(vertices));
         EBO EBO1(indices, sizeof(indices));
 
-        VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0);
-        VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3*sizeof(float)));
+        VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
+        VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3*sizeof(float)));
+        VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6*sizeof(float)));
         VAO1.Unbind();
         VBO1.Unbind();
         EBO1.Unbind();
 
-        GLuint uniID = glGetUniformLocation(ID, "scale");
+        GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
+
+
 
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glfwSwapBuffers(m_window);
 
-        Render::loop(&VAO1, &uniID);
+        Texture kitty("textures/texture.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+        kitty.texUnit(&shaderProgram, "tex0", 0);
+
+        Render::loop(&shaderProgram, &kitty, &VAO1, &uniID);
 
         VAO1.Delete();
         VBO1.Delete();
         EBO1.Delete();
-        Delete();
+        glDeleteTextures(1, &texture);
+        shaderProgram.Delete();
 
         glfwDestroyWindow(m_window);
 
@@ -122,18 +98,20 @@ namespace cedis{
         return 0;
     }
 
-    int Render::loop(VAO *VAO, GLuint *uniformID){
+    int Render::loop(Shader *shaderProgram, Texture *texture, VAO *VAO, GLuint *uniformID){
         while(!glfwWindowShouldClose(m_window)){
             // Render
             glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            Activate();
+            shaderProgram->Activate();
             glUniform1f(*uniformID, 0.5f);
+            
+            texture->Bind();
 
             VAO->Bind();
 
-            glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
             // Swap front and back buffers
             glfwSwapBuffers(m_window);
@@ -141,32 +119,6 @@ namespace cedis{
             // Poll for processed events
             glfwPollEvents();
         }
-        return 0;
-    }
-
-    int Render::createShader(GLuint *shaderProgram, const char* vertexShaderSource, const char* fragmentShaderSource){
-        // Create vertex shader
-        GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-        glCompileShader(vertexShader);
-        checkCompileErrors(vertexShader, "VERTEX");
-
-        // Create fragment shader
-        GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-        glCompileShader(fragmentShader);
-        checkCompileErrors(fragmentShader, "FRAGMENT");
-
-        // Wrap shaders in shader program
-        glAttachShader(*shaderProgram, vertexShader);
-        glAttachShader(*shaderProgram, fragmentShader);
-        glLinkProgram(*shaderProgram);
-        checkCompileErrors(*shaderProgram, "PROGRAM");
-
-        // Delete vertex and fragment shaders
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
-
         return 0;
     }
 
@@ -193,34 +145,4 @@ namespace cedis{
         return 0;
     }
 
-    char* Render::constructShaderSource(const char *file){
-        std::string code = getFileContents(file);
-        return strdup(code.c_str());
-    }
-
-    void Render::Activate(){
-        glUseProgram(ID);
-    }
-    void Render::Delete(){
-        glDeleteProgram(ID);
-    }
-
-    void Render::checkCompileErrors(unsigned int shader, const char *type){
-        GLint hasCompiled;
-        char infoLog[1024];
-        if (type != "PROGRAM"){
-            glGetShaderiv(shader, GL_COMPILE_STATUS, &hasCompiled);
-            if(hasCompiled == GL_FALSE){
-                glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "SHADER_COMPLICATION_ERROR for: " <<  type << "\n" << std::endl; 
-            }
-        }
-        else{
-            glGetProgramiv(shader, GL_COMPILE_STATUS, &hasCompiled);
-            if(hasCompiled == GL_FALSE){
-                glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                std::cout << "SHADER_LINKING_ERROR for: " <<  type << "\n" << std::endl; 
-            }
-        }
-    }
 }

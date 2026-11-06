@@ -5,15 +5,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(SOURCE_FILES
     src/main.cpp
-    src/clock.cpp
-    src/tui.cpp
+    #src/clock.cpp
+    #src/tui.cpp
 
     src/render/render.cpp
+    src/render/shader.cpp
+    src/render/texture.cpp
     src/render/vbo.cpp
     src/render/ebo.cpp
     src/render/vao.cpp
     
     src/include/gl.c
+    src/include/stb.cpp
 )
 
 include(FetchContent)
