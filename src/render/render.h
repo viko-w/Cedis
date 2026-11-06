@@ -23,5 +23,8 @@ namespace cedis {
         GLFWwindow* m_window;
         GLuint texture;
 
+        float rotation = 0.0f;
+        double prevTime;
+
     };
 }
