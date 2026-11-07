@@ -27,35 +27,15 @@ namespace cedis{
 
     GLfloat vertices[] = {
 	// POSITION		COLORS			TexCoords	NORMALS
-    	-0.5f, 0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	0.0f, 0.0f,	 0.0f, -1.0f,  0.0f,
-	-0.5f, 0.0f, -0.5f,	0.83f, 0.70f, 0.44f,	0.0f, 5.0f,	 0.0f, -1.0f,  0.0f,
-	 0.5f, 0.0f, -0.5f,	0.83f, 0.70f, 0.44f,	5.0f, 5.0f,	 0.0f, -1.0f,  0.0f,
-	 0.5f, 0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	5.0f, 0.0f,	 0.0f, -1.0f,  0.0f,
-
-	-0.5f, 0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	0.0f, 0.0f,	-0.8f,  0.5f,  0.0f,
-	-0.5f, 0.0f, -0.5f,	0.83f, 0.70f, 0.44f,	5.0f, 0.0f,	-0.8f,  0.5f,  0.0f,
-	 0.0f, 0.8f,  0.0f,	0.92f, 0.86f, 0.76f,	2.5f, 5.0f,	-0.8f,  0.5f,  0.0f,
-
-	-0.5f, 0.0f, -0.5f,	0.83f, 0.70f, 0.44f,	5.0f, 0.0f,	 0.0f,  0.5f, -0.8f,
-	 0.5f, 0.0f, -0.5f,	0.83f, 0.70f, 0.44f,	0.0f, 0.0f,	 0.0f,  0.5f, -0.8f,
-	 0.0f, 0.8f,  0.0f,	0.92f, 0.86f, 0.76f,	2.5f, 5.0f,	 0.0f,  0.5f, -0.8f,
-
-	 0.5f, 0.0f, -0.5f,	0.83f, 0.70f, 0.44f,	0.0f, 0.0f,	 0.8f,  0.5f,  0.0f,
-	 0.5f, 0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	5.0f, 0.0f,	 0.8f,  0.5f,  0.0f,
-	 0.0f, 0.8f,  0.0f,	0.92f, 0.86f, 0.76f,	2.5f, 5.0f,	 0.8f,  0.5f,  0.0f,
-
-	 0.5f, 0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	5.0f, 0.0f,	 0.0f,  0.5f,  0.8f,
-	-0.5f, 0.0f,  0.5f,	0.83f, 0.70f, 0.44f,	0.0f, 0.0f,	 0.0f,  0.5f,  0.8f,
-	 0.0f, 0.8f,  0.0f,	0.92f, 0.86f, 0.76f,	2.5f, 5.0f,	 0.0f,  0.5f,  0.8f
+        -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+        -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f
     };
 
     GLuint indices[] = {
         0, 1, 2,
-        0, 2, 3,
-        4, 6, 5,
-        7, 9, 8,
-        10, 12, 11,
-        13, 15, 14
+        0, 2, 3
     };
 
     GLfloat lightVertices[] = {
@@ -173,15 +153,18 @@ namespace cedis{
         glClear(GL_COLOR_BUFFER_BIT);
         glfwSwapBuffers(m_window);
 
-        Texture kitty("textures/texture.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+        Texture kitty("textures/texture.png", GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE);
         kitty.texUnit(&shaderProgram, "tex0", 0);
+
+        Texture kittySpec("textures/textureSpec.png", GL_TEXTURE_2D, 1, GL_RED, GL_UNSIGNED_BYTE);
+        kittySpec.texUnit(&shaderProgram, "tex1", 1);
 
 
         glEnable(GL_DEPTH_TEST);
 
         Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
-        Render::loop(&shaderProgram, &lightShader, &kitty, &VAO1, &lightVAO, &camera);
+        Render::loop(&shaderProgram, &lightShader, &kitty, &kittySpec, &VAO1, &lightVAO, &camera);
 
         VAO1.Delete();
         VBO1.Delete();
@@ -195,7 +178,7 @@ namespace cedis{
         return 0;
     }
 
-    int Render::loop(Shader *shaderProgram, Shader *lightShader, Texture *texture, VAO *vao, VAO *lightVao, Camera *camera){
+    int Render::loop(Shader *shaderProgram, Shader *lightShader, Texture *texture, Texture *specTexture, VAO *vao, VAO *lightVao, Camera *camera){
         while(!glfwWindowShouldClose(m_window)){
             // Render
             glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -211,6 +194,8 @@ namespace cedis{
             camera->Matrix(*shaderProgram, "camMatrix");
             
             texture->Bind();
+            specTexture->Bind();
+            
             vao->Bind();
 
             glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(int), GL_UNSIGNED_INT, 0);

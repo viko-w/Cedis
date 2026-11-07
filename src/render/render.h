@@ -16,7 +16,7 @@ namespace cedis {
         ~Render();
 
         int initWindow(const char* vertFile, const char* fragFile);
-        int loop(Shader *shaderProgram, Shader *lightShader, Texture *texture, VAO *vao, VAO *lightVao, Camera *camera);
+        int loop(Shader *shaderProgram, Shader *lightShader, Texture *texture, Texture *specTexture, VAO *vao, VAO *lightVao, Camera *camera);
 
         private:
         int createVertexObjects(GLuint *VAO, GLuint *VBO, GLuint *EBO, std::span<const GLfloat> vertices, std::span<const GLuint> indices);
