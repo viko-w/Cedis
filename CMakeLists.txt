@@ -3,6 +3,8 @@ project(cedis)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+find_package(glm CONFIG REQUIRED)
+
 set(SOURCE_FILES
     src/main.cpp
     #src/clock.cpp
@@ -13,6 +15,7 @@ set(SOURCE_FILES
     src/render/texture.cpp
     src/render/camera.cpp
     src/render/mesh.cpp
+    src/render/model.cpp
     src/render/vbo.cpp
     src/render/ebo.cpp
     src/render/vao.cpp

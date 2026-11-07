@@ -4,13 +4,13 @@
 #include <string>
 
 namespace cedis {
+    // TODO: move to separate header eventually?
+    std::string getFileContents(const char* filename);
+
     class Shader{
         public:
         GLuint ID;
         Shader(const char* vertFile, const char* fragFile);
-
-        // TODO: move to separate header eventually?
-        static std::string getFileContents(const char* filename);
 
         void Activate();
         void Delete();

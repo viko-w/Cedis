@@ -6,8 +6,8 @@
 
 namespace cedis {
     Shader::Shader(const char* vertFile, const char* fragFile){
-        std::string vertexCode = Shader::getFileContents(vertFile);
-        std::string fragmentCode = Shader::getFileContents(fragFile);
+        std::string vertexCode = getFileContents(vertFile);
+        std::string fragmentCode = getFileContents(fragFile);
 
         const char* vertexShaderSource = vertexCode.c_str();
         const char* fragmentShaderSource = fragmentCode.c_str();
@@ -66,7 +66,7 @@ namespace cedis {
     }
 
     #pragma region TODO: Move into appropriate header eventually
-    std::string Shader::getFileContents(const char *filename){
+    std::string getFileContents(const char *filename){
         std::ifstream in(filename, std::ios::binary);
         if(in){
             std::string contents;
