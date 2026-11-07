@@ -11,6 +11,7 @@ set(SOURCE_FILES
     src/render/render.cpp
     src/render/shader.cpp
     src/render/texture.cpp
+    src/render/camera.cpp
     src/render/vbo.cpp
     src/render/ebo.cpp
     src/render/vao.cpp

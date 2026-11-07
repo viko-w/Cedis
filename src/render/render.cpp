@@ -6,10 +6,12 @@
 #include "ebo.h"
 #include "vao.h"
 #include "shader.h"
+#include "camera.h"
 
 #include <GLFW/glfw3.h>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_float3.hpp>
 #include <glm/trigonometric.hpp>
 #include <stb_image.h>
 #include <cstring>
@@ -86,9 +88,6 @@ namespace cedis{
         VBO1.Unbind();
         EBO1.Unbind();
 
-        GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
-
-
 
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -98,11 +97,11 @@ namespace cedis{
         kitty.texUnit(&shaderProgram, "tex0", 0);
 
 
-        prevTime = glfwGetTime();
-
         glEnable(GL_DEPTH_TEST);
 
-        Render::loop(&shaderProgram, &kitty, &VAO1, &uniID);
+        Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
+
+        Render::loop(&shaderProgram, &kitty, &VAO1, &camera);
 
         VAO1.Delete();
         VBO1.Delete();
@@ -116,7 +115,7 @@ namespace cedis{
         return 0;
     }
 
-    int Render::loop(Shader *shaderProgram, Texture *texture, VAO *VAO, GLuint *uniformID){
+    int Render::loop(Shader *shaderProgram, Texture *texture, VAO *VAO, Camera *camera){
         while(!glfwWindowShouldClose(m_window)){
             // Render
             glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -124,39 +123,10 @@ namespace cedis{
 
             shaderProgram->Activate();
 
-            double crntTime = glfwGetTime();
-            if(crntTime - prevTime >= 1 / 60){
-                rotation += 0.5f;
-                prevTime = crntTime;
-            }
-
-            glm::mat4 model = glm::mat4(1.0f);
-            glm::mat4 view = glm::mat4(1.0f);
-            glm::mat4 proj = glm::mat4(1.0f);
-
-            // Rotate model
-            model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
-            
-            // Move the camera
-            view = glm::translate(view, glm::vec3(0.0f, -0.5f, -2.0f));
-            
-            // Clips objects close or far away from camera
-            proj = glm::perspective(glm::radians(45.0f), (float)(width / height), 0.1f, 100.0f);
-
-            int modelLoc = glGetUniformLocation(shaderProgram->ID, "model");
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-            int viewLoc = glGetUniformLocation(shaderProgram->ID, "view");
-            glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-            int projLoc = glGetUniformLocation(shaderProgram->ID, "proj");
-            glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
-
-
-            glUniform1f(*uniformID, 0.5f);
+            camera->Inputs(m_window);
+            camera->Matrix(45.0f, 0.1f, 100.0f, *shaderProgram, "camMatrix");
             
             texture->Bind();
-
             VAO->Bind();
 
             glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(int), GL_UNSIGNED_INT, 0);
