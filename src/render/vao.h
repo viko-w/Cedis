@@ -1,7 +1,7 @@
 #pragma once
 
 #include "vbo.h"
-#include_next <glad.h>
+#include <glad.h>
 
 namespace cedis {
     class VAO{

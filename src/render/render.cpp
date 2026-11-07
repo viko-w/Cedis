@@ -1,36 +1,23 @@
 #include "render.h"
-#include "glad.h"
 
+#include "glad.h"
+#include "mesh.h"
+#include "shader.h"
 #include "texture.h"
 #include "vbo.h"
-#include "ebo.h"
-#include "vao.h"
-#include "shader.h"
-#include "camera.h"
-
-#include <GLFW/glfw3.h>
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_float4x4.hpp>
-#include <glm/ext/matrix_transform.hpp>
+#include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
-#include <glm/trigonometric.hpp>
-#include <stb_image.h>
-#include <cstring>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <vector>
 
 
 
 namespace cedis{
 
-    GLfloat vertices[] = {
-	// POSITION		COLORS			TexCoords	NORMALS
-        -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-        -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f,
-        1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f
+    Vertex vertices[] = {
+        Vertex{glm::vec3(-1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)},
+        Vertex{glm::vec3(-1.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(0.0f, 1.0f)},
+        Vertex{glm::vec3(1.0f, 0.0f, -1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f)},
+        Vertex{glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec2(1.0f, 0.0f)}
     };
 
     GLuint indices[] = {
@@ -38,15 +25,15 @@ namespace cedis{
         0, 2, 3
     };
 
-    GLfloat lightVertices[] = {
-        -0.1f, -0.1f, 0.1f,
-        -0.1f, -0.1f, -0.1f,
-        0.1f, -0.1f, -0.1f,
-        0.1f, -0.1f, 0.1f,
-        -0.1f, 0.1f, 0.1f,
-        -0.1f, 0.1f, -0.1f,
-        0.1f, 0.1f, -0.1f,
-        0.1f, 0.1f, 0.1f
+    Vertex lightVertices[] = {
+        Vertex{glm::vec3(-0.1f, -0.1f, 0.1f)},
+        Vertex{glm::vec3(-0.1f, -0.1f, -0.1f)},
+        Vertex{glm::vec3(0.1f, -0.1f, -0.1f)},
+        Vertex{glm::vec3(0.1f, -0.1f, 0.1f)},
+        Vertex{glm::vec3(-0.1f, 0.1f, 0.1f)},
+        Vertex{glm::vec3(-0.1f, 0.1f, -0.1f)},
+        Vertex{glm::vec3(0.1f, 0.1f, -0.1f)},
+        Vertex{glm::vec3(0.1f, 0.1f, 0.1f)}
     };
 
     GLuint lightIndices[] = {
@@ -92,37 +79,26 @@ namespace cedis{
         gladLoadGL((GLADloadfunc) glfwGetProcAddress);
         glViewport(0, 0, width, height);
 
+        Texture textures[] {
+            Texture("textures/texture.png", "diffuse", 0, GL_RGBA, GL_UNSIGNED_BYTE),
+            Texture("textures/textureSpec.png", "specular", 1, GL_RED, GL_UNSIGNED_BYTE)
+        };
+
 
         Shader shaderProgram(vertFile, fragFile);
+        std::vector<Vertex> verts(vertices, vertices + sizeof(vertices) / sizeof(Vertex));
+        std::vector<GLuint> ind(indices, indices + sizeof(indices) / sizeof(GLuint));
+        std::vector<Texture> tex(textures, textures + sizeof(textures) / sizeof(Texture));
 
-        // Create Vertex Array/Buffer Object
-
-        VAO VAO1;
-        VAO1.Bind();
-
-        VBO VBO1(vertices, sizeof(vertices));
-        EBO EBO1(indices, sizeof(indices));
-
-        VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 11 * sizeof(float), (void*)0);
-        VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 11 * sizeof(float), (void*)(3*sizeof(float)));
-        VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 11 * sizeof(float), (void*)(6*sizeof(float)));
-        VAO1.LinkAttrib(VBO1, 3, 3, GL_FLOAT, 11 * sizeof(float), (void*)(8 * sizeof(float)));
-        VAO1.Unbind();
-        VBO1.Unbind();
-        EBO1.Unbind();
+        Mesh floor(verts, ind, tex);
 
 
         Shader lightShader("shaders/light.vert", "shaders/light.frag");
-        VAO lightVAO;
-        lightVAO.Bind();
-        VBO lightVBO(lightVertices, sizeof(lightVertices));
-        EBO lightEBO(lightIndices, sizeof(lightIndices));
+        std::vector<Vertex> lightVerts(lightVertices, lightVertices + sizeof(lightVertices) / sizeof(Vertex));
+        std::vector<GLuint> lightInd(lightIndices, lightIndices + sizeof(lightIndices) / sizeof(GLuint));
 
-        lightVAO.LinkAttrib(lightVBO, 0, 3, GL_FLOAT, 3 * sizeof(float), (void*)0);
+        Mesh light(lightVerts, lightInd, tex);
 
-        lightVAO.Unbind();
-        lightVBO.Unbind();
-        lightEBO.Unbind();
 
         glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -153,24 +129,16 @@ namespace cedis{
         glClear(GL_COLOR_BUFFER_BIT);
         glfwSwapBuffers(m_window);
 
-        Texture kitty("textures/texture.png", GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE);
-        kitty.texUnit(&shaderProgram, "tex0", 0);
-
-        Texture kittySpec("textures/textureSpec.png", GL_TEXTURE_2D, 1, GL_RED, GL_UNSIGNED_BYTE);
-        kittySpec.texUnit(&shaderProgram, "tex1", 1);
-
 
         glEnable(GL_DEPTH_TEST);
 
         Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
-        Render::loop(&shaderProgram, &lightShader, &kitty, &kittySpec, &VAO1, &lightVAO, &camera);
+        Render::loop(&shaderProgram, &lightShader, &camera, &floor, &light);
 
-        VAO1.Delete();
-        VBO1.Delete();
-        EBO1.Delete();
         glDeleteTextures(1, &texture);
         shaderProgram.Delete();
+        lightShader.Delete();
 
         glfwDestroyWindow(m_window);
 
@@ -178,7 +146,7 @@ namespace cedis{
         return 0;
     }
 
-    int Render::loop(Shader *shaderProgram, Shader *lightShader, Texture *texture, Texture *specTexture, VAO *vao, VAO *lightVao, Camera *camera){
+    int Render::loop(Shader *shaderProgram, Shader *lightShader, Camera *camera, Mesh *floor, Mesh *light){
         while(!glfwWindowShouldClose(m_window)){
             // Render
             glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -187,23 +155,9 @@ namespace cedis{
             camera->Inputs(m_window);
             camera->updateMatrix(45.0f, 0.1f, 100.0f);
 
-            shaderProgram->Activate();
-            glUniform3f(glGetUniformLocation(shaderProgram->ID, "camPos"),
-                camera->Position.x, camera->Position.y, camera->Position.z);
-
-            camera->Matrix(*shaderProgram, "camMatrix");
+            floor->draw(*shaderProgram, *camera);
+            light->draw(*lightShader, *camera);
             
-            texture->Bind();
-            specTexture->Bind();
-            
-            vao->Bind();
-
-            glDrawElements(GL_TRIANGLES, sizeof(indices)/sizeof(int), GL_UNSIGNED_INT, 0);
-
-            lightShader->Activate();
-            camera->Matrix(*lightShader, "camMatrix");
-            lightVao->Bind();
-            glDrawElements(GL_TRIANGLES, sizeof(lightIndices) / sizeof(int), GL_UNSIGNED_INT, 0);
 
             // Swap front and back buffers
             glfwSwapBuffers(m_window);

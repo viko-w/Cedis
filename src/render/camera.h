@@ -1,6 +1,7 @@
 #pragma once
 
 #define GLM_ENABLE_EXPERIMENTAL
+#define GLFW_INCLUDE_NONE
 
 #include <GLFW/glfw3.h>
 #undef GL_INVALID_INDEX

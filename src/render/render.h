@@ -1,9 +1,8 @@
 #pragma once
 
 #include "camera.h"
-#include "vao.h"
+#include "mesh.h"
 #include "shader.h"
-#include "texture.h"
 #include <glad.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -16,7 +15,7 @@ namespace cedis {
         ~Render();
 
         int initWindow(const char* vertFile, const char* fragFile);
-        int loop(Shader *shaderProgram, Shader *lightShader, Texture *texture, Texture *specTexture, VAO *vao, VAO *lightVao, Camera *camera);
+        int loop(Shader *shaderProgram, Shader *lightShader, Camera *camera, Mesh *floor, Mesh *light);
 
         private:
         int createVertexObjects(GLuint *VAO, GLuint *VBO, GLuint *EBO, std::span<const GLfloat> vertices, std::span<const GLuint> indices);
