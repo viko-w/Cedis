@@ -8,7 +8,7 @@ namespace cedis {
 
         int widthImg, heightImg, numColCh;
         stbi_set_flip_vertically_on_load(true);
-        unsigned char* bytes = stbi_load(image, &widthImg, &heightImg, &numColCh, STBI_rgb_alpha);
+        unsigned char* bytes = stbi_load(image, &widthImg, &heightImg, &numColCh, 0);
         
         glGenTextures(1, &ID);
 
@@ -22,6 +22,8 @@ namespace cedis {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        
         if(numColCh == 4){
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                 widthImg, heightImg, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
