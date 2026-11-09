@@ -14,6 +14,8 @@
 namespace cedis{
     const unsigned int width = 800;
     const unsigned int height = 800;
+    constexpr float nearPlane = 0.001f;
+    constexpr float farPlane = 100.0f;
 
     Render::Render() {  }
 
@@ -57,6 +59,8 @@ namespace cedis{
             lightColor.x, lightColor.y, lightColor.z, lightColor.w);
         glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"),
             lightPos.x, lightPos.y, lightPos.z);
+        glUniform1f(glGetUniformLocation(shaderProgram.ID, "nearPlane"), nearPlane);
+        glUniform1f(glGetUniformLocation(shaderProgram.ID, "farPlane"), farPlane);
 
 
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -65,12 +69,13 @@ namespace cedis{
 
 
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
 
         Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
-        Model suzanne("models/suzanne.gltf");
+        Model model("models/landscape.gltf");
 
-        Render::loop(&shaderProgram, &camera, &suzanne);
+        Render::loop(&shaderProgram, &camera, &model);
 
         glDeleteTextures(1, &texture);
         shaderProgram.Delete();
@@ -84,11 +89,11 @@ namespace cedis{
     int Render::loop(Shader *shaderProgram, Camera *camera, Model *model){
         while(!glfwWindowShouldClose(m_window)){
             // Render
-            glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+            glClearColor(0.85f, 0.85f, 0.90f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             camera->Inputs(m_window);
-            camera->updateMatrix(45.0f, 0.1f, 100.0f);
+            camera->updateMatrix(45.0f, nearPlane, farPlane);
 
             model->draw(*shaderProgram, *camera);
 
