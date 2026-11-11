@@ -5,8 +5,10 @@
 #include "shader.h"
 #include "texture.h"
 #include "vbo.h"
+#include <GLFW/glfw3.h>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
+#include <string>
 #include <vector>
 
 
@@ -72,10 +74,17 @@ namespace cedis{
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        glFrontFace(GL_CCW);
 
         Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
         Model model("models/landscape.gltf");
+
+
+        // Disable VSync
+        glfwSwapInterval(0);
 
         Render::loop(&shaderProgram, &camera, &model);
 
@@ -90,11 +99,27 @@ namespace cedis{
 
     int Render::loop(Shader *shaderProgram, Camera *camera, Model *model){
         while(!glfwWindowShouldClose(m_window)){
+            crntTime = glfwGetTime();
+            timeDiff = crntTime - prevTime;
+            counter++;
+            if(timeDiff >= 1.0 / 30.0){
+                std::string FPS = std::to_string((1.0 / timeDiff) * counter);
+                std::string ms = std::to_string((timeDiff  / counter) * 1000);
+                std::string newTitle = "Spooky Amdus Window — "+FPS+"fps — "+ms+"ms";
+                glfwSetWindowTitle(m_window, newTitle.c_str());
+                prevTime = crntTime;
+                counter = 0;
+            }
+
+            // Calc deltatime
+            dt = crntTime - deltaPrevTime;
+            deltaPrevTime = crntTime;
+            
             // Render
             glClearColor(0.85f, 0.85f, 0.90f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-            camera->Inputs(m_window);
+            camera->Inputs(m_window, dt);
             camera->updateMatrix(45.0f, nearPlane, farPlane);
 
 

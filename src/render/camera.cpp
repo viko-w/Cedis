@@ -32,35 +32,37 @@ namespace cedis {
             shader.ID, uniform), 1, GL_FALSE,glm::value_ptr(cameraMatrix));
     }
 
-    void Camera::Inputs(GLFWwindow *window){
+    void Camera::Inputs(GLFWwindow *window, double dt){
+        float deltaSpeed = speed * dt;
+
+        // Change speed
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
+            deltaSpeed = speed * dt * 2;
+        }
+        else if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE){
+            deltaSpeed = speed * dt;
+        }
+
         // WASD controls
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-            Position += speed * Orientation;
+            Position += deltaSpeed * Orientation;
         }
         if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-            Position += speed * -glm::normalize(glm::cross(Orientation, Up));
+            Position += deltaSpeed * -glm::normalize(glm::cross(Orientation, Up));
         }
         if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-            Position += speed * -Orientation;
+            Position += deltaSpeed * -Orientation;
         }
         if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-            Position += speed * glm::normalize(glm::cross(Orientation, Up));
+            Position += deltaSpeed * glm::normalize(glm::cross(Orientation, Up));
         }
 
         // Up/Down
         if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
-            Position += speed * Up;
+            Position += deltaSpeed * Up;
         }
         if(glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS){
-            Position += speed * -Up;
-        }
-
-        // Change speed
-        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
-            speed = 0.4f;
-        }
-        else if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE){
-            speed = 0.1f;
+            Position += deltaSpeed * -Up;
         }
 
         // Mouse controls

@@ -26,7 +26,13 @@ namespace cedis {
 
         // Might change eventually?
         float rotation = 0.0f;
-        double prevTime;
+
+        double dt = 0.0f;
+        double prevTime = 0.0f;
+        double deltaPrevTime = 0.0f;
+        double crntTime = 0.0f;
+        double timeDiff;
+        unsigned int counter = 0;
 
     };
 }

@@ -29,13 +29,13 @@ namespace cedis {
         int width;
         int height;
 
-        float speed = 0.1f;
+        float speed = 3.0f;
         float sensitiviy = 100.0f;
 
         Camera(int width, int height, glm::vec3 position);
 
         void Matrix(Shader &shader, const char *uniform);
         void updateMatrix(float FOVdeg, float nearPlane, float farPlane);
-        void Inputs(GLFWwindow *window);
+        void Inputs(GLFWwindow *window, double dt);
     };
 }
