@@ -45,6 +45,8 @@ namespace cedis{
 
         Shader shaderProgram(vertFile, fragFile);
 
+        Shader outliningProgram("shaders/outlining.vert", "shaders/outlining.frag");
+
         glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
         glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
@@ -71,11 +73,14 @@ namespace cedis{
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
 
+        glEnable(GL_STENCIL_TEST);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
         Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
         Model model("models/landscape.gltf");
 
-        Render::loop(&shaderProgram, &camera, &model);
+        Render::loop(&shaderProgram, &outliningProgram, &camera, &model);
 
         glDeleteTextures(1, &texture);
         shaderProgram.Delete();
@@ -86,16 +91,29 @@ namespace cedis{
         return 0;
     }
 
-    int Render::loop(Shader *shaderProgram, Camera *camera, Model *model){
+    int Render::loop(Shader *shaderProgram, Shader *outliningProgram, Camera *camera, Model *model){
         while(!glfwWindowShouldClose(m_window)){
             // Render
             glClearColor(0.85f, 0.85f, 0.90f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             camera->Inputs(m_window);
             camera->updateMatrix(45.0f, nearPlane, farPlane);
 
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
             model->draw(*shaderProgram, *camera);
+
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilMask(0x00);
+            glDisable(GL_DEPTH_TEST);
+            outliningProgram->Activate();
+            glUniform1f(glGetUniformLocation(outliningProgram->ID, "outlining"), 1.08f);
+            model->draw(*outliningProgram, *camera);
+
+            glStencilMask(0xFF);
+            glStencilFunc(GL_ALWAYS, 0, 0xFF);
+            glEnable(GL_DEPTH_TEST);
 
             // Swap front and back buffers
             glfwSwapBuffers(m_window);
