@@ -4,6 +4,8 @@
 #include "mesh.h"
 #include "model.h"
 #include "shader.h"
+#include "texture.h"
+#include <cstddef>
 #include <glad.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -11,6 +13,10 @@
 
 namespace cedis {
     class Render{
+        typedef struct{
+            float x, y;
+        } vector2;
+
         public:
         Render();
         ~Render();
@@ -20,6 +26,14 @@ namespace cedis {
 
         private:
         int createVertexObjects(GLuint *VAO, GLuint *VBO, GLuint *EBO, std::span<const GLfloat> vertices, std::span<const GLuint> indices);
+
+        // Temporary random generator
+        Model genLandscape(int seed = 0);
+        void genPerlinNoise(int seed = 0);
+        float perlin(float x, float y);
+        float dotGridGradient(int ix, int iy, float x, float y);
+        vector2 randomGradient(int ix, int iy);
+        float interpolate(float a0, float a1, float w);
 
         GLFWwindow* m_window;
         GLuint texture;
@@ -33,6 +47,7 @@ namespace cedis {
         double crntTime = 0.0f;
         double timeDiff;
         unsigned int counter = 0;
+        int noiseSeed = 0;
 
     };
 }

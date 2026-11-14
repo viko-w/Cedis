@@ -5,7 +5,15 @@
 #include "shader.h"
 #include "texture.h"
 #include "vbo.h"
+
+#include <stb_image_write.h>
+
 #include <GLFW/glfw3.h>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <ctime>
+#include <glm/ext/scalar_uint_sized.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <string>
@@ -80,7 +88,8 @@ namespace cedis{
 
         Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
-        Model model("models/landscape.gltf");
+        genPerlinNoise();
+        Model model = genLandscape();
 
 
         // Disable VSync
@@ -156,6 +165,112 @@ namespace cedis{
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         return 0;
+    }
+
+    Model Render::genLandscape(int seed){
+        if (seed == 0) srand(time(0));
+        else srand(seed);
+
+        Model *model = new Model("models/perlin.gltf");
+        return *model;
+    }
+    void Render::genPerlinNoise(int seed){
+        srand(time(0));
+        if(seed == 0) seed = rand();
+        
+
+        noiseSeed = seed;
+
+        glm::uint8 *pixels = new glm::uint8[(width * 2) * (height * 2) * 4];
+        const int gridSize = 600;
+
+        for (int x = 0; x < width * 2; x++){
+            for (int y = 0; y < height * 2; y++){
+                int index = (y * width * 2 + x) * 4;
+                float val = 0;
+                float freq = 1;
+                float amp = 1;
+
+                for(int i = 0; i < 6; i++){
+                    val += perlin(x * freq / gridSize, y * freq / gridSize) *amp;
+                    freq *= 2;
+                    amp /= 2;
+                }
+
+                // Contrast
+                val *= 1.2;
+
+                // Clip
+                if(val > 1.0f) val = 1.0f;
+                else if (val < -1.0f) val = -1.0f;
+
+                int color = (int)(((val + 1.0f) * 0.5f) * 255);
+
+                pixels[index] = color;
+                pixels[index + 1] = color;
+                pixels[index + 2] = color;
+                pixels[index + 3] = 255;
+            }
+        }
+
+        stbi_write_png("textures/perlin_baseColor.png", width * 2, height * 2, 4, pixels, 0);
+    }
+
+    Render::vector2 Render::randomGradient(int ix, int iy) {
+        uint32_t h = (uint32_t)ix * 374761393u
+                + (uint32_t)iy * 668265263u
+                + (uint32_t)noiseSeed * 1442695041u;
+
+        h = (h ^ (h >> 13)) * 1274126177u;
+        h ^= h >> 16;
+
+        float angle = (h / 4294967296.0f) * 6.28318530718f;
+
+        Render::vector2 v;
+        v.x = cos(angle);
+        v.y = sin(angle);
+
+        return v;
+    }
+
+    float Render::dotGridGradient(int ix, int iy, float x, float y){
+        Render::vector2 gradient = randomGradient(ix, iy);
+
+        float dx = x - (float)ix;
+        float dy = y - (float)iy;
+
+        return (dx * gradient.x + dy * gradient.y);
+    }
+
+    float Render::interpolate(float a0, float a1, float w){
+        float t = w * w * w * (w * (w * 6.0f - 15.0f) + 10.0f);
+        return a0 + t * (a1 - a0);
+    }
+
+    float Render::perlin(float x, float y){
+        // Nearest grid point
+        int x0 = (int)floor(x);
+        int y0 = (int)floor(y);
+        int x1 = x0 + 1;
+        int y1 = y0 + 1;
+
+        // Interpolation weights
+        float sx = x - (float)x0;
+        float sy = y - (float)y0;
+
+        // Compute & interpolate top two corners
+        float n0 = dotGridGradient(x0, y0, x, y);
+        float n1 = dotGridGradient(x1, y0, x, y);
+        float ix0 = interpolate(n0, n1, sx);
+
+        // Compute & interpolate bottom two corners
+        n0 = dotGridGradient(x0, y1, x, y);
+        n1 = dotGridGradient(x1, y1, x, y);
+        float ix1 = interpolate(n0, n1, sx);
+
+        // Interpolate between two previously interpolated values
+        float value = interpolate(ix0, ix1, sy);
+        return value;
     }
 
 }
