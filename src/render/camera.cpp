@@ -22,7 +22,7 @@ namespace cedis {
         glm::mat4 projection = glm::mat4(1.0f);
 
         view = glm::lookAt(Position, Position + Orientation, Up);
-        projection = glm::perspective(glm::radians(FOVdeg), (float)(width / height), nearPlane, farPlane);
+        projection = glm::perspective(glm::radians(FOVdeg), static_cast<float>(width) / height, nearPlane, farPlane);
         
         cameraMatrix = projection * view;
     }
@@ -70,16 +70,19 @@ namespace cedis {
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
             if (firstClick){
-                glfwSetCursorPos(window, (width / 2), (height / 2));
+                glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
                 firstClick = false;
+                return;
             }
 
             double mouseX;
             double mouseY;
             glfwGetCursorPos(window, &mouseX, &mouseY);
 
-            float rotX = sensitiviy * (float)(mouseY - (height / 2)) / height;
-            float rotY = sensitiviy * (float)(mouseX - (height / 2)) / height;
+            float rotX = sensitiviy * static_cast<float>(mouseY - lastMouseY) / height;
+            float rotY = sensitiviy * static_cast<float>(mouseX - lastMouseX) / height;
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
 
             glm::vec3 newOrientation = glm::rotate(
                 Orientation, glm::radians(-rotX), glm::normalize(glm::cross(Orientation, Up)));
@@ -91,8 +94,6 @@ namespace cedis {
             }
 
             Orientation = glm::rotate(Orientation, glm::radians(-rotY), Up);
-
-            glfwSetCursorPos(window, (width / 2), (height / 2));
         }
         else if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE){
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);

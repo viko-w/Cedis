@@ -106,6 +106,17 @@ namespace cedis{
 
     int Render::loop(Shader *shaderProgram, Camera *camera, Model *model){
         while(!glfwWindowShouldClose(m_window)){
+            int windowWidth, windowHeight, framebufferWidth, framebufferHeight;
+            glfwGetWindowSize(m_window, &windowWidth, &windowHeight);
+            glfwGetFramebufferSize(m_window, &framebufferWidth, &framebufferHeight);
+            if (windowWidth == 0 || windowHeight == 0 || framebufferWidth == 0 || framebufferHeight == 0) {
+                glfwPollEvents();
+                continue;
+            }
+            glViewport(0, 0, framebufferWidth, framebufferHeight);
+            camera->width = windowWidth;
+            camera->height = windowHeight;
+
             crntTime = glfwGetTime();
             timeDiff = crntTime - prevTime;
             counter++;
