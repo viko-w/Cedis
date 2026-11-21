@@ -6,6 +6,7 @@
 #include "texture.h"
 #include "vbo.h"
 
+#include <cstring>
 #include <stb_image_write.h>
 
 #include <GLFW/glfw3.h>
@@ -25,7 +26,7 @@ namespace cedis{
     const unsigned int width = 800;
     const unsigned int height = 800;
     constexpr float nearPlane = 0.001f;
-    constexpr float farPlane = 100.0f;
+    constexpr float farPlane = 3000.0f;
 
     Render::Render() {  }
 
@@ -55,7 +56,6 @@ namespace cedis{
 
         Shader shaderProgram(vertFile, fragFile);
 
-        Shader outliningProgram("shaders/outlining.vert", "shaders/outlining.frag");
 
         glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -82,15 +82,13 @@ namespace cedis{
 
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
+        glDisable(GL_CULL_FACE);
         glFrontFace(GL_CCW);
 
-        Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
+        Camera camera(width, height, glm::vec3(0.0f, 300.0f, 800.0f));
+        camera.Orientation = glm::normalize(glm::vec3(0.0f, -0.35f, -1.0f));
 
-        genPerlinNoise();
         Model model = genLandscape();
-
 
         // Disable VSync
         glfwSwapInterval(0);
@@ -171,20 +169,45 @@ namespace cedis{
         if (seed == 0) srand(time(0));
         else srand(seed);
 
-        Model *model = new Model("models/perlin.gltf");
-        return *model;
+        int mWidth, mHeight;
+        std::vector<std::vector<float>> pixels = genPerlinNoise(seed);
+        std::vector<Vertex> vertices;
+
+        for(int i = 0; i < pixels.size(); i++){
+            for(int j = 0; j < pixels[i].size(); j++){
+                Vertex vertex{
+                    {static_cast<float>(i) - width, pixels[i][j], static_cast<float>(j) - height},
+                    {0.0f, 1.0f, 0.0f},
+                    {0.15f, 0.65f, 0.20f},
+                    {static_cast<float>(i) / (pixels.size() - 1),
+                    static_cast<float>(j) / (pixels[i].size()- 1)}
+                };
+                vertices.push_back(vertex);
+            }
+        }
+
+        mWidth = pixels.size();
+        mHeight = pixels[0].size();
+
+
+        Model model;
+        model.loadTexture("textures/perlin_baseColor.png");
+        model.loadFromVertices(vertices, mWidth, mHeight);
+        //model->loadFromFile("models/perlin.gltf");
+        return model;
     }
-    void Render::genPerlinNoise(int seed){
+    std::vector<std::vector<float>> Render::genPerlinNoise(int seed){
         srand(time(0));
         if(seed == 0) seed = rand();
         
-
         noiseSeed = seed;
 
         glm::uint8 *pixels = new glm::uint8[(width * 2) * (height * 2) * 4];
+        std::vector<std::vector<float>> data;
         const int gridSize = 600;
 
         for (int x = 0; x < width * 2; x++){
+            data.push_back({ });
             for (int y = 0; y < height * 2; y++){
                 int index = (y * width * 2 + x) * 4;
                 float val = 0;
@@ -210,13 +233,16 @@ namespace cedis{
                 pixels[index + 1] = color;
                 pixels[index + 2] = color;
                 pixels[index + 3] = 255;
+
+                data[x].push_back(color);
             }
         }
 
         stbi_write_png("textures/perlin_baseColor.png", width * 2, height * 2, 4, pixels, 0);
+        return data;
     }
 
-    Render::vector2 Render::randomGradient(int ix, int iy) {
+    glm::vec2 Render::randomGradient(int ix, int iy) {
         uint32_t h = (uint32_t)ix * 374761393u
                 + (uint32_t)iy * 668265263u
                 + (uint32_t)noiseSeed * 1442695041u;
@@ -226,7 +252,7 @@ namespace cedis{
 
         float angle = (h / 4294967296.0f) * 6.28318530718f;
 
-        Render::vector2 v;
+        glm::vec2 v;
         v.x = cos(angle);
         v.y = sin(angle);
 
@@ -234,7 +260,7 @@ namespace cedis{
     }
 
     float Render::dotGridGradient(int ix, int iy, float x, float y){
-        Render::vector2 gradient = randomGradient(ix, iy);
+        glm::vec2 gradient = randomGradient(ix, iy);
 
         float dx = x - (float)ix;
         float dy = y - (float)iy;

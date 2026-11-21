@@ -7,16 +7,14 @@
 #include "texture.h"
 #include <cstddef>
 #include <glad.h>
+#include <glm/ext/vector_float2.hpp>
+#include <vector>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <span>
 
 namespace cedis {
     class Render{
-        typedef struct{
-            float x, y;
-        } vector2;
-
         public:
         Render();
         ~Render();
@@ -29,10 +27,10 @@ namespace cedis {
 
         // Temporary random generator
         Model genLandscape(int seed = 0);
-        void genPerlinNoise(int seed = 0);
+        std::vector<std::vector<float>> genPerlinNoise(int seed = 0);
         float perlin(float x, float y);
         float dotGridGradient(int ix, int iy, float x, float y);
-        vector2 randomGradient(int ix, int iy);
+        glm::vec2 randomGradient(int ix, int iy);
         float interpolate(float a0, float a1, float w);
 
         GLFWwindow* m_window;

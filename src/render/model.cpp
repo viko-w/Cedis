@@ -17,7 +17,17 @@
 #include <vector>
 
 namespace cedis {
-    Model::Model(const char* file){
+    Model::Model(){
+
+    }
+
+    void Model::draw(Shader &shader, Camera &camera){
+        for(unsigned int i = 0; i < meshes.size(); i++){
+            meshes[i].Mesh::draw(shader, camera, matricesMeshes[i]);
+        }
+    }
+
+    void Model::loadFromFile(const char *file){
         std::string text = getFileContents(file);
         JSON = json::parse(text);
 
@@ -27,10 +37,36 @@ namespace cedis {
         traverseNode(0);
     }
 
-    void Model::draw(Shader &shader, Camera &camera){
-        for(unsigned int i = 0; i < meshes.size(); i++){
-            meshes[i].Mesh::draw(shader, camera, matricesMeshes[i]);
+    void Model::loadFromVertices(std::vector<Vertex> vertices, int width, int height){
+        std::vector<GLuint> indices;
+
+        auto index = [height](int x, int y){
+            return static_cast<GLuint>(x * height + y);
+        };
+
+        for(int x = 0; x < width -1; x++){
+            for(int y = 0; y < height -1; y++){
+                GLuint a = index(x, y);
+                GLuint b = index(x + 1, y);
+                GLuint c = index(x + 1, y + 1);
+                GLuint d = index(x, y + 1);
+
+                indices.insert(indices.end(), {a, b, c, a, c, d});
+            }
         }
+
+        meshes.emplace_back(vertices, indices, loadedTex);
+        matricesMeshes.emplace_back(1.0f);
+    }
+
+    void Model::loadTexture(const char *textureFile){
+        std::vector<Texture> textures;
+        
+        Texture texture = Texture(textureFile, "diffuse", loadedTex.size());
+        textures.push_back(texture);
+        loadedTex.push_back(texture);
+        loadedTexName.push_back(textureFile);
+    
     }
 
     void Model::loadMesh(unsigned int indMesh){

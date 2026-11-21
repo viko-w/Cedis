@@ -29,7 +29,7 @@ namespace cedis {
         int width;
         int height;
 
-        float speed = 3.0f;
+        float speed = 100.0f;
         float sensitiviy = 100.0f;
 
         Camera(int width, int height, glm::vec3 position);

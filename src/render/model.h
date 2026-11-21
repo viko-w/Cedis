@@ -1,11 +1,13 @@
 #pragma once
 
+#include <cstddef>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/ext/vector_float4.hpp>
 #include <glm/fwd.hpp>
 #include <json.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 #include "camera.h"
@@ -19,8 +21,11 @@ using json = nlohmann::json;
 namespace cedis {
     class Model{
         public:
-        Model(const char* file);
+        Model();
         void draw(Shader &shader, Camera &camera);
+        void loadFromFile(const char* file);
+        void loadFromVertices(std::vector<Vertex> vertices, int width, int height);
+        void loadTexture(const char* textureFile);
 
         private:
         std::vector<unsigned char> getData();
