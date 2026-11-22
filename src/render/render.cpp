@@ -88,7 +88,7 @@ namespace cedis{
         Camera camera(width, height, glm::vec3(0.0f, 300.0f, 800.0f));
         camera.Orientation = glm::normalize(glm::vec3(0.0f, -0.35f, -1.0f));
 
-        Model model = genLandscape(1);
+        Model model = genLandscape();
 
         // Disable VSync
         glfwSwapInterval(0);

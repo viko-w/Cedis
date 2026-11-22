@@ -66,14 +66,17 @@ namespace cedis {
         }
 
         // Mouse controls
-        if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS){
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && firstClick){
+            firstClick = false;
+            lockMouse = !lockMouse;
+            glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
+        }
+        else if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE){
+            firstClick = true;
+        }
 
-            if (firstClick){
-                glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
-                firstClick = false;
-                return;
-            }
+        if(lockMouse){
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
             double mouseX;
             double mouseY;
@@ -95,10 +98,7 @@ namespace cedis {
 
             Orientation = glm::rotate(Orientation, glm::radians(-rotY), Up);
         }
-        else if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE){
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            firstClick = true;
-        }
+        else if(!lockMouse) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     }
 }

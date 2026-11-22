@@ -25,6 +25,7 @@ namespace cedis {
         glm::mat4 cameraMatrix = glm::mat4(1.0f);
 
         bool firstClick = true;
+        bool lockMouse = false;
         double lastMouseX = 0.0;
         double lastMouseY = 0.0;
 
