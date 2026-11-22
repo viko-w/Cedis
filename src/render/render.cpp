@@ -88,7 +88,7 @@ namespace cedis{
         Camera camera(width, height, glm::vec3(0.0f, 300.0f, 800.0f));
         camera.Orientation = glm::normalize(glm::vec3(0.0f, -0.35f, -1.0f));
 
-        Model model = genLandscape();
+        Model model = genLandscape(1);
 
         // Disable VSync
         glfwSwapInterval(0);
@@ -187,11 +187,11 @@ namespace cedis{
         for(int i = 0; i < pixels.size(); i++){
             for(int j = 0; j < pixels[i].size(); j++){
                 Vertex vertex{
-                    {static_cast<float>(i) - width, pixels[i][j], static_cast<float>(j) - height},
+                    {static_cast<float>(i) - width, pixels[i][j], -(static_cast<float>(j) - height)},
                     {0.0f, 1.0f, 0.0f},
                     {0.15f, 0.65f, 0.20f},
                     {static_cast<float>(i) / (pixels.size() - 1),
-                    static_cast<float>(j) / (pixels[i].size()- 1)}
+                    1.0f - static_cast<float>(j) / (pixels[i].size()- 1)}
                 };
                 vertices.push_back(vertex);
             }

@@ -21,7 +21,7 @@ void main(){
    Normal = aNormal;
 
    color = aColor;
-   texCoord = mat2(0.0, -1.0, 1.0, 0.0) * aTex;
+   texCoord = aTex;
    
    gl_Position = camMatrix * model * translation * rotation * scale * vec4(aPos, 1.0);
 }
